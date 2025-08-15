@@ -1,0 +1,5 @@
+<resources>
+  <string name="app_name">Slide Show</string>
+  <string name="button_open_dir">Directory containing images</string>
+  <string name="Ok">OK</string>
+</resources>
