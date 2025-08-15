@@ -37,7 +37,7 @@ class ImageSlideshowAdapter(private var imageUris: List<Uri>) :
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImageViewHolder
     {
         val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_slideshow_image, parent, false) // Create this layout file next
+            .inflate(R.layout.item_slideshow_image, parent, false)
         return ImageViewHolder(view)
     }
 

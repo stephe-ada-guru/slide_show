@@ -2,9 +2,9 @@
 <!--
   Abstract :
 
-  Misc IDs for Stephe's Music Player
+  Preferences UI layout for Stephe's Slide Show, one size fits all
 
-  Copyright (C) 2024 Stephen Leake.  All Rights Reserved.
+  Copyright (C) 2011, 2015 Stephen Leake.  All Rights Reserved.
 
   This program is free software; you can redistribute it and/or
   modify it under terms of the GNU General Public License as
@@ -18,8 +18,17 @@
   write to the Free Software Foundation, 51 Franklin Street, Suite
   500, Boston, MA 02110-1335, USA.
 -->
-<resources>
-  <item type="id" name="menu_open"/>
-  <item type="id" name="menu_preferences"/>
-  <item type="id" name="main_toolbar"/>
-</resources>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".PrefActivity">
+
+  <androidx.fragment.app.FragmentContainerView
+      android:id="@+id/pref_container"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

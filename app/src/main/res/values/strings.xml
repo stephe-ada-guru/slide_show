@@ -1,5 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
 <resources>
   <string name="app_name">Slide Show</string>
-  <string name="button_open_dir">Directory containing images</string>
   <string name="Ok">OK</string>
+
+  <string name="menu_open">Open</string>
+  <string name="menu_preferences">Preferences</string>
+
+  <string name="slide_duration_key">slide_duration</string>
+  <string name="slide_duration_default">10000</string>
+  <string name="slide_duration_title">Slide duration, milliseconds</string>
+  <string name="slide_duration_summary">Slide duration</string>
+  <string name="slide_duration_dialog_title">Slide duration</string>
+
 </resources>
