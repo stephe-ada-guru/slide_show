@@ -13,6 +13,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.DocumentsContract
 import android.provider.Settings
+import android.util.Base64
 import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
@@ -28,18 +29,43 @@ import androidx.viewpager2.widget.ViewPager2
 
 import java.io.File
 
-import android.view.View.GONE
-import android.view.View.VISIBLE
 class MainActivity : AppCompatActivity()
 {
-   private val CHECK_PERM_OPEN_DIR = 101
-
-   val globalDirectory : String = "/storage/emulated/0/Images" // Just a starting point for picking a directory.
+   private val globalDirectory : String = "/storage/emulated/0/Images" // Just a starting point for picking a directory.
 
    private lateinit var slideshow: ViewPager2
    private lateinit var imageSlideshowAdapter: ImageSlideshowAdapter
    private val slideshowHandler = Handler(Looper.getMainLooper()) // Handler for slideshow transitions
    private var slideshowRunnable: Runnable? = null
+
+   private fun alert(message : String)
+   {
+      AlertDialog.Builder(this)
+         .setMessage(message)
+         .setPositiveButton(R.string.Ok, null).show()
+   }
+   
+   private fun checkPermission() : Boolean
+   // Returns true if permissions are already granted, false if
+   // they are now requested.
+   //
+   // If false, caller must return and wait for user to restart the
+   // activity after granting permission
+   {
+      var result = true
+
+      // Request MANAGE_EXTERNAL_STORAGE to read global image directories
+      if (!Environment.isExternalStorageManager())
+         {
+            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+            intent.addCategory("android.intent.category.DEFAULT")
+            intent.data = Uri.parse("package:${applicationContext.packageName}")
+            startActivity(intent)
+            result = false
+         }
+
+      return result
+   }
 
    private fun startSlideshowTimer()
    {
@@ -55,10 +81,8 @@ class MainActivity : AppCompatActivity()
       }
       catch (_ : java.lang.NumberFormatException)
       {
-         AlertDialog.Builder(this)
-            .setMessage("invalid value '${slideDurationString}' for preference" +
-                        "${this.getString(R.string.slide_duration_title)}; must be an integer.")
-            .setPositiveButton(R.string.Ok, null).show()
+         alert("invalid value '${slideDurationString}' for preference" +
+               "${this.getString(R.string.slide_duration_title)}; must be an integer.")
       }
 
       slideshowRunnable = Runnable {
@@ -80,66 +104,56 @@ class MainActivity : AppCompatActivity()
       }
    }
      
-   private fun checkPermission(code : Int) : Boolean
-   // Returns true if permissions are already granted, false if
-   // they are now requested.
-   //
-   // If false, caller must return and wait for
-   // MainActivity.onRequestPermissionsResult to restart the
-   // activity indicated by 'code'.
+   fun getDirectoryFromGhostCommanderUri(fileUri : Uri): String?
    {
-      val REQUIRED_PERMISSIONS = arrayOf(android.Manifest.permission.READ_MEDIA_IMAGES)
+      // like  content://com.ghostsq.commander.FileProvider/FS/L3N0b3JhZ2UvZW11bGF0ZWQvMC9QaWN0dXJlcy93YWxscGFwZXI/003_0.JPG
+      val path = fileUri.path
 
-      val permissionsToRequest = mutableListOf<String>()
-      
-      var result = true
-
-      // Request MANAGE_EXTERNAL_STORAGE to read global images.
-      if (!Environment.isExternalStorageManager())
+      if (path != null && path.startsWith("/FS/"))
          {
-            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-            intent.addCategory("android.intent.category.DEFAULT")
-            intent.data = Uri.parse("package:${applicationContext.packageName}")
-            startActivity(intent)
-            result = false
-         }
+            val encodedPartAndFile = path.substring("/FS/".length)
+            val lastSlashIndex = encodedPartAndFile.lastIndexOf('/')
 
-      for (permission in REQUIRED_PERMISSIONS)
-         {
-            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED)
-               {
-                  permissionsToRequest.add(permission)
-               }
-         }
-      
-      if (permissionsToRequest.isNotEmpty())
-         {
-            var rationaleRequired = false
-            
-            for (permission in REQUIRED_PERMISSIONS)
-               {
-                  if (this.shouldShowRequestPermissionRationale(permission))
-                     {
-                        // See // https://developer.android.com/training/permissions/requesting#explain
-                        rationaleRequired = true
-                     }
-               }
+         if (lastSlashIndex != -1)
+            {
+               val encodedDirPath = encodedPartAndFile.substring(0, lastSlashIndex)
+            try
+            {
+               val decodedPathBytes = Base64.decode(encodedDirPath, Base64.DEFAULT)
+               val decodedDirectoryPath = String(decodedPathBytes, Charsets.UTF_8)
 
-            if (rationaleRequired)
-               { AlertDialog.Builder(this)
-                    .setMessage("We allow viewing images from anywhere in storage, " +
-                    "so we need file read/write permission.")
-                    .setPositiveButton(R.string.Ok, null).show()
-               }
-            
-               ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), code)
+               if (decodedDirectoryPath.startsWith("/"))
+                  {
+                     Log.d("DirectoryExtract", "Decoded directory path: $decodedDirectoryPath")
+                     return decodedDirectoryPath
+                  }
 
-            result = false
+            } catch (e: IllegalArgumentException)
+            {
+               // not Base64
+            }
          }
-      return result
-   }
+      }
+      return null
+   } // getDirectoryFromGhostCommanderUri
 
    val imageExtensions = arrayOf("jpg", "jpeg", "png", "webp", "bmp")
+
+   private fun getImages(absPath: File): List<Uri>
+   {
+      val files = absPath.listFiles{
+         file ->
+            !file.isDirectory &&
+         imageExtensions.any {ext -> file.name.endsWith(".$ext", ignoreCase = true)}}
+
+      if (files == null) // How can this happen!? Should just be an empty array
+         return emptyList()
+      else
+         return files.mapNotNull{
+            file ->
+               try {Uri.fromFile(file)}
+            catch (_ : Exception) {null}}
+   } // getImages(String)
 
    private fun getImages(directoryUri: Uri): List<Uri>
    {
@@ -177,29 +191,106 @@ class MainActivity : AppCompatActivity()
          }
       } catch (e: Exception) {
          Log.e("SAF_FILES", "Error querying SAF directory", e)
-      } finally {
-         cursor?.close() // Ensure cursor is closed (though 'use' handles this)
       }
       return imageFiles
+   }  // getImages(Uri)
+
+   private fun startShow (images : List<Uri>)
+   {
+      imageSlideshowAdapter.updateImages(images)
+      startSlideshowTimer()
    }
 
    private val pickDirectoryLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-           result ->
-              if (result.resultCode == Activity.RESULT_OK)
-              {
-                 result.data?.data?.also {
-                    directoryUri ->
-                       imageSlideshowAdapter.updateImages(getImages(directoryUri))
-                    startSlideshowTimer()
-                 }
+      registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+         result ->
+            if (result.resultCode == Activity.RESULT_OK)
+            {
+               result.data?.data?.also {
+                  directoryUri ->
+                     val images = getImages(directoryUri) 
+                  if (images.size > 0)
+                     {
+                        startShow(images)
+                     }
+                  else
+                     {
+                        alert("No images found in ${directoryUri}.")
+                     }
+               }
             } else {
-                Log.w("DirectoryPicker", "Directory selection cancelled or failed.")
+               Log.w("DirectoryPicker", "Directory selection cancelled or failed.")
             }
-        }
+      }
 
-   fun onClickOpenDir(v : View)
+   private fun isTreeUri(uri: Uri): Boolean
    {
+      val paths = uri.pathSegments
+      return paths.isNotEmpty() &&
+      paths[0] == "tree" &&
+      paths.size >= 2
+   }
+
+   private fun handleIntent (intent : Intent)
+   {
+      var images = listOf<Uri>()
+      var absPath : String? = null
+      var badIntent = false
+      
+      if (intent.action == Intent.ACTION_VIEW && intent.data != null)
+         {
+            // Probably from GhostCommander 'open with ..'
+            absPath = getDirectoryFromGhostCommanderUri(intent.data!!)
+         }
+      else if (intent.action == Intent.ACTION_SEND)
+         {
+            // Probably from GhostCommander 'send to ...'
+            val uri : Uri? = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM, Uri::class.java)
+            
+            if (uri != null)
+               {
+                  absPath = getDirectoryFromGhostCommanderUri(uri)
+               }
+            else
+               {
+                  badIntent = true
+               }
+         }
+      else
+         badIntent = true
+      
+      if (absPath != null)
+         {
+            val dir = File(absPath)
+            if (dir.exists() && dir.isDirectory)
+               {
+                  if (checkPermission())
+                     {
+                        images = getImages(dir)
+                     }
+                  else
+                     {
+                        return
+                     }
+               }
+            else
+               badIntent = true
+         }
+
+      if (badIntent)
+         {
+            alert("intent not recognized: ${intent.toString()}")
+            return
+         }
+      
+      if (images.size > 0)
+         {
+            startShow(images)
+         }
+      else
+         {
+            alert("No images found in ${absPath}.")
+         }
    }
    
    override fun onCreate(savedInstanceState: Bundle?)
@@ -210,8 +301,19 @@ class MainActivity : AppCompatActivity()
       slideshow = findViewById(R.id.image_slideshow)
       imageSlideshowAdapter = ImageSlideshowAdapter(emptyList())
       slideshow.adapter = imageSlideshowAdapter
+
+      if (this.intent != null && intent.action != Intent.ACTION_MAIN)
+         {
+            handleIntent(this.intent)
+         }
    }
 
+   override fun onNewIntent(intent : Intent)
+   {
+      super.onNewIntent(intent)
+      handleIntent(intent)
+   }
+   
    override fun onCreateOptionsMenu(menu: Menu): Boolean
    {
       val Inf: MenuInflater = getMenuInflater()
@@ -227,13 +329,10 @@ class MainActivity : AppCompatActivity()
 
          R.id.menu_open ->
             {
-               if (checkPermission(CHECK_PERM_OPEN_DIR))
-                  {
-                     val initialUri = DocumentsContract.buildRootsUri("com.android.externalstorage.documents")
-                     val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-                     intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initialUri)
-                     pickDirectoryLauncher.launch(intent)
-                  }
+               val initialUri = DocumentsContract.buildRootsUri("com.android.externalstorage.documents")
+               val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+               intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, initialUri)
+               pickDirectoryLauncher.launch(intent)
             }
          
          R.id.menu_preferences ->
