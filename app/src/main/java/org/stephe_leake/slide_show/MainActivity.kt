@@ -3,8 +3,6 @@ package org.stephe_leake.slide_show
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
-import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
 import android.os.Bundle
@@ -18,12 +16,11 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
-import android.view.View
-import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.preference.PreferenceManager
 import androidx.viewpager2.widget.ViewPager2
 
@@ -37,6 +34,7 @@ class MainActivity : AppCompatActivity()
    private lateinit var imageSlideshowAdapter: ImageSlideshowAdapter
    private val slideshowHandler = Handler(Looper.getMainLooper()) // Handler for slideshow transitions
    private var slideshowRunnable: Runnable? = null
+   private var isSystemBarsVisible = true // Track the state
 
    private fun alert(message : String)
    {
@@ -197,6 +195,7 @@ class MainActivity : AppCompatActivity()
 
    private fun startShow (images : List<Uri>)
    {
+      hideSystemBars()
       imageSlideshowAdapter.updateImages(images)
       startSlideshowTimer()
    }
@@ -293,13 +292,40 @@ class MainActivity : AppCompatActivity()
          }
    }
    
+   private fun hideSystemBars()
+   {
+      val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+      windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+      windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
+      supportActionBar?.hide()
+      isSystemBarsVisible = false
+   }
+
+   private fun showSystemBars()
+   {
+      val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+      windowInsetsController.show(WindowInsetsCompat.Type.systemBars())
+      supportActionBar?.show()
+      isSystemBarsVisible = true
+   }
+
    override fun onCreate(savedInstanceState: Bundle?)
    {
       super.onCreate(savedInstanceState)
+
       setContentView(R.layout.mainactivity)
 
+      // Make the activity edge-to-edge; draws behind system bars
+      WindowCompat.setDecorFitsSystemWindows(window, false) 
+
       slideshow = findViewById(R.id.image_slideshow)
-      imageSlideshowAdapter = ImageSlideshowAdapter(emptyList())
+      
+      imageSlideshowAdapter = ImageSlideshowAdapter(emptyList()){
+         // onImageClick:
+         stopSlideshowTimer()
+         showSystemBars()
+      }
+      
       slideshow.adapter = imageSlideshowAdapter
 
       if (this.intent != null && intent.action != Intent.ACTION_MAIN)
@@ -349,4 +375,3 @@ class MainActivity : AppCompatActivity()
       return false // continue menu processing
    } // onOptionsItemSelected
 }
-

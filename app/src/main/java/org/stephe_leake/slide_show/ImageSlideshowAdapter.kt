@@ -26,19 +26,28 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 
-class ImageSlideshowAdapter(private var imageUris: List<Uri>) :
-   RecyclerView.Adapter<ImageSlideshowAdapter.ImageViewHolder>()
+class ImageSlideshowAdapter(
+   private var imageUris: List<Uri>,
+   private val onItemClick: () -> Unit // Lambda to be called on item click
+) : RecyclerView.Adapter<ImageSlideshowAdapter.ImageViewHolder>()
 {
-    class ImageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+    class ImageViewHolder(
+       itemView: View,
+       private val onItemClick: () -> Unit)
+       : RecyclerView.ViewHolder(itemView)
     {
         val imageView: ImageView = itemView.findViewById(R.id.slideshow_item_view)
+        init
+        {
+           itemView.setOnClickListener {onItemClick()}
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImageViewHolder
     {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_slideshow_image, parent, false)
-        return ImageViewHolder(view)
+        return ImageViewHolder(view, onItemClick)
     }
 
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int)
