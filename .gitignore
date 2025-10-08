@@ -6,5 +6,7 @@
 .idea/
 /build
 /captures
-gradle/
 local.properties
+gradle.bat
+gradlew
+gradle/wrapper/
