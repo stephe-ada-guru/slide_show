@@ -361,6 +361,12 @@ class MainActivity : AppCompatActivity()
                pickDirectoryLauncher.launch(intent)
             }
          
+         R.id.menu_go ->
+            {
+               hideSystemBars()
+               startSlideshowTimer()
+            }
+         
          R.id.menu_preferences ->
             {
                // We don't need a result

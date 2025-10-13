@@ -6,6 +6,7 @@
   <string name="Ok">OK</string>
 
   <string name="menu_open">Open</string>
+  <string name="menu_go">Go</string>
   <string name="menu_preferences">Preferences</string>
 
   <string name="slide_duration_key">slide_duration</string>

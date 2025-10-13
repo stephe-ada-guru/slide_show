@@ -24,6 +24,9 @@
       android:id="@id/menu_open"
       android:title="@string/menu_open"/>
   <item
+      android:id="@id/menu_go"
+      android:title="@string/menu_go"/>
+  <item
       android:id="@id/menu_preferences"
       android:title="@string/menu_preferences"/>
 </menu>

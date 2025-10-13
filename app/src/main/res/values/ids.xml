@@ -20,6 +20,7 @@
 -->
 <resources>
   <item type="id" name="menu_open"/>
+  <item type="id" name="menu_go"/>
   <item type="id" name="menu_preferences"/>
   <item type="id" name="main_toolbar"/>
 </resources>
