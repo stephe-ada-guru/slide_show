@@ -25,7 +25,8 @@ write to the Free Software Foundation, 51 Franklin Street, Suite
     android:gravity="top"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:weightSum="1">
+    android:weightSum="1"
+    android:background="#000000">
 
   <androidx.viewpager2.widget.ViewPager2
       android:id="@+id/image_slideshow"
