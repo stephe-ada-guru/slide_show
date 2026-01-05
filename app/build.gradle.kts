@@ -57,6 +57,8 @@ dependencies {
    implementation("androidx.preference:preference-ktx:1.2.1")
    implementation("androidx.viewpager2:viewpager2:1.1.0")
    implementation("androidx.activity:activity-ktx:1.9.0")
+   
+   implementation("com.github.chrisbanes:PhotoView:2.3.0") // for zoom
 
    testImplementation(libs.junit)
    androidTestImplementation(libs.androidx.junit)

@@ -25,6 +25,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.github.chrisbanes.photoview.PhotoView
 
 class ImageSlideshowAdapter(
    private var imageUris: List<Uri>,
@@ -36,7 +37,7 @@ class ImageSlideshowAdapter(
        private val onItemClick: () -> Unit)
        : RecyclerView.ViewHolder(itemView)
     {
-        val imageView: ImageView = itemView.findViewById(R.id.slideshow_item_view)
+        val imageView: PhotoView = itemView.findViewById(R.id.slideshow_item_view)
         init
         {
            itemView.setOnClickListener {onItemClick()}
