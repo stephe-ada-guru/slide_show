@@ -197,7 +197,7 @@ class MainActivity : AppCompatActivity()
    {
       hideSystemBars()
       imageSlideshowAdapter.updateImages(images)
-      startSlideshowTimer()
+      // startSlideshowTimer() called by onResume
    }
 
    private val pickDirectoryLauncher =
@@ -339,7 +339,21 @@ class MainActivity : AppCompatActivity()
       super.onNewIntent(intent)
       handleIntent(intent)
    }
-   
+
+   override fun onResume()
+   {
+      super.onResume()
+      if (!isSystemBarsVisible) // proxy for "is playing"
+         {
+         startSlideshowTimer()
+      }
+   }
+
+   override fun onPause()
+   {
+      super.onPause()
+      stopSlideshowTimer()
+   }
    override fun onCreateOptionsMenu(menu: Menu): Boolean
    {
       val Inf: MenuInflater = getMenuInflater()
