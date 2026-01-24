@@ -51,10 +51,6 @@ class ImageSlideshowAdapter(
           .load(imageUri)
           .into(holder.imageView)
        
-       // WORKAROUND: this didn't work:
-       // Attach the click listener from the adapter's constructor
-       // holder.imageView.setOnPhotoTapListener { _, _, _ -> onItemClick()}
-       
        holder.imageView.setOnClickListener {onItemClick()}
     }
 
