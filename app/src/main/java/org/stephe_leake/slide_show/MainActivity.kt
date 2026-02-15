@@ -97,6 +97,7 @@ class MainActivity : AppCompatActivity()
    private fun stopSlideshowTimer()
    {
       slideshowRunnable?.let {
+         window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
          slideshowHandler.removeCallbacks(it)
          slideshowRunnable = null
       }
@@ -299,6 +300,7 @@ class MainActivity : AppCompatActivity()
       windowInsetsController.hide(WindowInsetsCompat.Type.systemBars())
       supportActionBar?.hide()
       isSystemBarsVisible = false
+      window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
    }
 
    private fun showSystemBars()
